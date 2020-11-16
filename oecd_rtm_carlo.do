@@ -316,3 +316,28 @@ gr hbar mig1-mig5, over(skillrisk) stack percent /// unclear
 		
 		
 * Who is most concerned about long-term skill insufficiencies?
+**************************************************************
+ta skillrisk, gen(skillrisk)
+
+gr hbar skillrisk1-skillrisk4, over(s6) stack percent /// education
+	ytitle("Percent") ///
+	legend(order(1 "Not at all concerned" 2 "Not so concerned" /// curved
+		3 "Somewhat concerned" 4 "Very concerned"))
+		
+		
+gr hbar skillrisk1-skillrisk4, over(q4) stack percent /// perceived job security
+	ytitle("Percent") ///
+	legend(order(1 "Not at all concerned" 2 "Not so concerned" /// strong (!)
+		3 "Somewhat concerned" 4 "Very concerned")) 
+		
+		
+gr hbar skillrisk1-skillrisk4, over(s3_agegroup) stack percent /// age
+	ytitle("Percent") ///
+	legend(order(1 "Not at all concerned" 2 "Not so concerned" /// mostly young!
+		3 "Somewhat concerned" 4 "Very concerned")) 
+		
+		
+gr hbar skillrisk1-skillrisk4, over(s27) stack percent /// perceived job security
+	ytitle("Percent") ///
+	legend(order(1 "Not at all concerned" 2 "Not so concerned" /// strong (!)
+		3 "Somewhat concerned" 4 "Very concerned")) 
