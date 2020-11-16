@@ -179,6 +179,7 @@ gr hbar mig1-mig5, over(occ) stack percent /// stronger among higher
 	legend(order(1 "Strongly oppose" 2 "Oppose" ///
 		3 "Neither" 4 "Support" 5 "Strongly support"))
 		
+		
 * Exposure to technology at work
 recode s30 (99=.a), copyrest gen(exp)
 	label values exp s30
