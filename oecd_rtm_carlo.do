@@ -393,7 +393,10 @@ gr bar, over(q31a, label(angle(15))) by(ctrcode) // education
 * Data reduction (factor)
 *************************
 
-factor q31a-q31h, pcf
+factor q31a-q31h, pcf 
+	rotate
+	
+factor q31a-q31g, pcf // note: without migration
 	rotate
 	predict passive active
 	
