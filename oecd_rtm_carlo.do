@@ -380,7 +380,6 @@ gr hbar rti_score offs_score, over(exp) // exposure to technology at work
 	
 * Country-variation in policy preferences
 *****************************************
-
 gr bar, over(q31a, label(angle(15))) by(ctrcode) // education
 	gr bar, over(q31b, label(angle(15))) by(ctrcode) // voc training
 	gr bar, over(q31c, label(angle(15))) by(ctrcode) // infrastructure
@@ -390,3 +389,4 @@ gr bar, over(q31a, label(angle(15))) by(ctrcode) // education
 	gr bar, over(q31g, label(angle(15))) by(ctrcode) // UBI - looks very similar!
 	gr bar, over(q31h, label(angle(15))) by(ctrcode) // skilled migration; looks interesting
 	
+
