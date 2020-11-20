@@ -35,14 +35,21 @@ ta q31a, gen(edupref)
 **************
 
 * Government measures to cope with digitalization
-ta q31a // education
-	ta q31b // vocational training
-	ta q31c // infrastructure
-	ta q31d // robot tax
-	ta q31e // work hour sharing
-	ta q31f // more generous social safety net
-	ta q31g // universal basic income
-	ta q31h // migration
+gr bar, over(q31a, label(angle(15))) // education
+	gr bar, over(q31b, label(angle(15))) // vocational training
+	gr bar, over(q31c, label(angle(15))) // infrastructure
+	gr bar, over(q31d, label(angle(15))) // robot tax
+	gr bar, over(q31e, label(angle(15))) // work hour sharing
+	gr bar, over(q31f, label(angle(15))) // more generous social safety net
+	gr bar, over(q31g, label(angle(15))) // universal basic income
+	gr bar, over(q31h, label(angle(15))) // migration
+	
+	
+* Data reduction
+****************
+
+pca q31*
+	pca q27* // all reduce to one main component	
 	
 	
 * Education
@@ -338,7 +345,10 @@ gr hbar skillrisk1-skillrisk4, over(s3_agegroup) stack percent /// age
 		3 "Somewhat concerned" 4 "Very concerned")) 
 		
 		
-gr hbar skillrisk1-skillrisk4, over(s27) stack percent /// perceived job security
+gr hbar skillrisk1-skillrisk4, over(s27) stack percent /// occupation
 	ytitle("Percent") ///
 	legend(order(1 "Not at all concerned" 2 "Not so concerned" /// strong (!)
 		3 "Somewhat concerned" 4 "Very concerned")) 
+		
+		
+
