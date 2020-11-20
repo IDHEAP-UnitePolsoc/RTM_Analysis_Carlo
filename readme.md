@@ -8,3 +8,6 @@ Work in progress
 3. Weaker relationships with objective variables (education, age, occupation, exposure to tech at work)
 
 **Overall story: Young manual workers are vulnerable, and they know it** (_are they represented in any meaningful way?_)
+
+
+4. Closer look at Q31 using factor analysis: Answers can be reduced to two factors, one including Qs 31a-c (corresponding to social investment), the second including Qs 31d-g (corresponding to 'passive protection'); Q31h (migration) falls outside
