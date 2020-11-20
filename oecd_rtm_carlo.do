@@ -20,6 +20,9 @@ keep q31* s6 id ctrcode weight s3_agegroup q4 s27 q3d s30 q27*
 ************
 svyset id [pweight=weight], strata(ctrcode)
 
+* Removing 'can't choose'
+for var q31a-q31h: replace X =.a if X==97 | X==-77
+
 * Dummy coding of main DVs
 **************************
 ta q31a, gen(edupref)
@@ -41,6 +44,8 @@ gen isco=s27
 merge m:1 isco using rti_scores.dta
 	ta s27 if _merge==1 // all non-matched are missing on ISCO/S27
 	drop _merge
+	
+tabstat rti_score offs_score, by(isco)
 	
 
 * Descriptives
@@ -363,4 +368,25 @@ gr hbar skillrisk1-skillrisk4, over(s27) stack percent /// occupation
 		3 "Somewhat concerned" 4 "Very concerned")) 
 		
 		
+* RTI, offsharability & risk perceptions
+****************************************
 
+gr hbar rti_score offs_score, over(skillrisk) // stark!!
+
+gr hbar rti_score offs_score, over(q27a) // self-assessed automation risk
+
+gr hbar rti_score offs_score, over(exp) // exposure to technology at work
+	
+	
+* Country-variation in policy preferences
+*****************************************
+
+gr bar, over(q31a, label(angle(15))) by(ctrcode) // education
+	gr bar, over(q31b, label(angle(15))) by(ctrcode) // voc training
+	gr bar, over(q31c, label(angle(15))) by(ctrcode) // infrastructure
+	gr bar, over(q31d, label(angle(15))) by(ctrcode) // robot tax; looks interesting
+	gr bar, over(q31e, label(angle(15))) by(ctrcode) // shared hours
+	gr bar, over(q31f, label(angle(15))) by(ctrcode) // benefits & services
+	gr bar, over(q31g, label(angle(15))) by(ctrcode) // UBI - looks very similar!
+	gr bar, over(q31h, label(angle(15))) by(ctrcode) // skilled migration; looks interesting
+	
