@@ -30,6 +30,18 @@ ta q31a, gen(edupref)
 	ta q31f, gen(socprot)	
 	ta q31g, gen(ubi)
 	ta q31h, gen(mig)
+	
+	
+* RTI & offsharability scores
+*****************************
+
+gen isco=s27
+	replace isco=. if isco==10 | isco==99
+	
+merge m:1 isco using rti_scores.dta
+	ta s27 if _merge==1 // all non-matched are missing on ISCO/S27
+	drop _merge
+	
 
 * Descriptives
 **************

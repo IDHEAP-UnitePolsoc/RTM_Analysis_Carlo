@@ -22,11 +22,11 @@ keep dname isco_88_r rti_score offs_score // Subset
 	
 
 tostring isco_88_r, gen(isco_str) // Aggregate to ISCO-major
-	gen isco_maj=substr(isco_str,1,1)
-	destring isco_maj, replace
-	collapse rti_score offs_score, by(isco_maj)
+	gen isco=substr(isco_str,1,1)
+	destring isco, replace
+	collapse rti_score offs_score, by(isco)
 	
 * Saving
-sort isco_maj
+sort isco
 	compress
 	save rti_scores.dta, replace
