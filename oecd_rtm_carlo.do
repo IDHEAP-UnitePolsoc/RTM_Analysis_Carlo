@@ -390,3 +390,82 @@ gr bar, over(q31a, label(angle(15))) by(ctrcode) // education
 	gr bar, over(q31h, label(angle(15))) by(ctrcode) // skilled migration; looks interesting
 	
 
+* Data reduction (factor)
+*************************
+
+factor q31a-q31h, pcf
+	rotate
+	predict passive active
+	
+	
+gr hbar passive active, over(isco)
+	gr hbar passive active, over(s3_agegroup)
+	gr hbar passive active, over(s6) // same as occupation
+	
+	
+tabstat passive active rti_score offs_score, by(s27) // closer look at occupations
+
+preserve
+collapse passive active rti_score offs_score, by(isco)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+	gr tw (scatter passive offs_score) (lfit passive offs_score), saving(three)
+	gr tw (scatter active offs_score) (lfit active offs_score), saving(four)
+		gr combine one.gph two.gph three.gph four.gph
+	erase one.gph 
+	erase two.gph 
+	erase three.gph 
+	erase four.gph
+restore // makes sense
+
+
+preserve
+collapse passive active rti_score if ctrcode=="USA", by(isco)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+		gr combine one.gph two.gph 
+	erase one.gph 
+	erase two.gph
+restore
+
+preserve
+collapse passive active rti_score if ctrcode=="DNK", by(isco)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+		gr combine one.gph two.gph 
+	erase one.gph 
+	erase two.gph
+restore
+
+preserve
+collapse passive active rti_score if ctrcode=="ITA", by(isco)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+		gr combine one.gph two.gph 
+	erase one.gph 
+	erase two.gph
+restore
+
+preserve
+collapse passive active rti_score if ctrcode=="LTU", by(isco)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+		gr combine one.gph two.gph 
+	erase one.gph 
+	erase two.gph
+restore
+
+preserve
+collapse passive active rti_score if ctrcode=="TUR", by(isco)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+		gr combine one.gph two.gph 
+	erase one.gph 
+	erase two.gph
+restore
+
+* Cross-country variation in overall approval
+preserve
+	collapse passive active, by(ctrcode)
+	gr hbar active passive, over(ctrcode, sort(active) desc)
+restore
