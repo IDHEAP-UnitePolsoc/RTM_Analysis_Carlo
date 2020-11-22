@@ -59,14 +59,7 @@ gr bar, over(q31a, label(angle(15))) // education
 	gr bar, over(q31e, label(angle(15))) // work hour sharing
 	gr bar, over(q31f, label(angle(15))) // more generous social safety net
 	gr bar, over(q31g, label(angle(15))) // universal basic income
-	gr bar, over(q31h, label(angle(15))) // migration
-	
-	
-* Data reduction
-****************
-
-pca q31*
-	pca q27* // all reduce to one main component	
+	gr bar, over(q31h, label(angle(15))) // migration	
 	
 	
 * Education
@@ -362,7 +355,7 @@ gr hbar skillrisk1-skillrisk4, over(s3_agegroup) stack percent /// age
 		3 "Somewhat concerned" 4 "Very concerned")) 
 		
 		
-gr hbar skillrisk1-skillrisk4, over(s27) stack percent /// occupation
+gr hbar skillrisk1-skillrisk4, over(s27, sort(rti_score)) stack percent /// occupation
 	ytitle("Percent") ///
 	legend(order(1 "Not at all concerned" 2 "Not so concerned" /// strong (!)
 		3 "Somewhat concerned" 4 "Very concerned")) 
@@ -371,11 +364,11 @@ gr hbar skillrisk1-skillrisk4, over(s27) stack percent /// occupation
 * RTI, offsharability & risk perceptions
 ****************************************
 
-gr hbar rti_score offs_score, over(skillrisk) // stark!!
+gr hbar rti_score, over(skillrisk) // stark!!
 
-gr hbar rti_score offs_score, over(q27a) // self-assessed automation risk
+gr hbar rti_score, over(q27a) // self-assessed automation risk
 
-gr hbar rti_score offs_score, over(exp) // exposure to technology at work
+gr hbar rti_score, over(exp) // exposure to technology at work
 	
 	
 * Country-variation in policy preferences
@@ -424,8 +417,8 @@ restore // makes sense
 
 preserve
 collapse passive active rti_score if ctrcode=="USA", by(isco)
-	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
-	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one, replace)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two, replace)
 		gr combine one.gph two.gph 
 	erase one.gph 
 	erase two.gph
@@ -433,8 +426,8 @@ restore
 
 preserve
 collapse passive active rti_score if ctrcode=="DNK", by(isco)
-	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one)
-	gr tw (scatter active rti_score) (lfit active rti_score), saving(two)
+	gr tw (scatter passive rti_score) (lfit passive rti_score), saving(one, replace)
+	gr tw (scatter active rti_score) (lfit active rti_score), saving(two, replace)
 		gr combine one.gph two.gph 
 	erase one.gph 
 	erase two.gph
