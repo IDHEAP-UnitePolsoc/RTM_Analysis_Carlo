@@ -23,13 +23,31 @@ effects %>%
 
 # Graph results - rhos
 effects %>% 
-    mutate(cntry = factor(effects$Country, levels = effects$Country[order(effects$rho_passive, decreasing = T)])) %>% 
-    select(cntry,rho_passive, rho_active) %>% 
-    pivot_longer(cols = c("rho_active","rho_passive"),
-                 names_to="inds",
-                 values_to="vals") %>% 
-    ggplot(aes(x=cntry,y=vals,fill=inds)) +
-        geom_bar(position = "dodge", stat = "identity")
+    #mutate(cntry = factor(effects$Country, levels = effects$Country[order(effects$rho_passive, decreasing = T)])) %>% 
+    select(Country,rho_passive) %>% 
+    #pivot_longer(cols = c("rho_active","rho_passive"),
+     #            names_to="inds",
+      #           values_to="vals") %>% 
+    ggplot(aes(x=reorder(Country, -rho_passive),y=rho_passive)) +
+        geom_bar(position = "dodge", stat = "identity") +
+        geom_rect(aes(ymin=-.4,ymax=.4,xmin=-Inf,xmax=Inf), alpha=0.05,fill="pink")
+
+effects %>% 
+    select(Country, rho_active) %>% 
+    ggplot(aes(x=reorder(Country, -rho_active),y=rho_active)) +
+        geom_bar(position = "dodge", stat = "identity")  +
+        geom_rect(aes(ymin=-.4,ymax=.4,xmin=-Inf,xmax=Inf), alpha=0.05,fill="pink")
+
+
+effects %>%
+    select(Country,rho_passive, rho_active) %>% 
+    ggplot(aes(x=rho_passive,y=rho_active)) +
+        geom_rect(aes(xmin=-0.3,ymin=-Inf,ymax=Inf,xmax=.3), alpha=0.01,fill="pink") +
+        geom_rect(aes(xmin=-Inf,ymin=-0.3,ymax=0.3,xmax=Inf), alpha=0.01,fill="green") +
+        geom_point() +
+        geom_text(aes(label=Country)) +
+        geom_hline(yintercept = 0) +
+        geom_vline(xintercept = 0)
 
 # Reading in OECD Educational attainment data
 #############################################
@@ -54,3 +72,22 @@ edudata %>%
     ggplot(aes(x=Country,y=obsValue,fill=isced)) +
         geom_bar(position = "dodge",stat = "identity")
 
+isced <- edudata %>%
+    filter(AGE=="Y25T34" & ISC11A %in% c("L3T4_C5")) %>% 
+    select(Country,obsValue) %>% 
+    rename(voc = obsValue)
+
+data <- merge(effects,isced,
+                 by.x = "Country")
+
+data %>% 
+    ggplot(aes(x=voc,y=rho_passive)) +
+        geom_point() +
+        geom_text(aes(label=Country)) +
+        geom_smooth(method = "lm")
+
+data %>% 
+    ggplot(aes(x=voc,y=rho_active)) +
+        geom_point() +
+        geom_text(aes(label=Country)) +
+        geom_smooth(method = "lm")

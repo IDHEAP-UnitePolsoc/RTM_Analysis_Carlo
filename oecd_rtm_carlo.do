@@ -180,125 +180,30 @@ forvalues i = 1/`r(max)'{
 	qui corr active rti_score // correlate, active
 		local rho = r(rho)
 		putexcel E`c'= `rho'
+		
+	gr tw (scatter passive rti_score, mlabel(isco) ms(+)) ///
+		(lfit passive rti_score, lp(dash)), ///
+		legend(off) xtitle("Routine-task intensity score") ///
+		ytitle("Support for passive measures") ///
+		title(`levl')
+		gr export "compa_graphs/rti_passive_`i'.pdf", replace	
+		
+	gr tw (scatter active rti_score, mlabel(isco) ms(+)) ///
+		(lfit active rti_score, lp(dash)), ///
+		legend(off) xtitle("Routine-task intensity score") ///
+		ytitle("Support for active measures") ///
+		title(`levl')
+		gr export "compa_graphs/rti_active_`i'.pdf", replace
 	
 	restore
 }
 
 
-
-preserve
-
-collapse passive active rti_score if ctrcode=="BEL", by(isco)
+* Overall support by country
+gr bar active, over(ctrcode, sort(active) descending ///
+	label(angle(15) labs(vsmall)))
 	
-	reg passive rti_score, r // regression, passive
-		pwcorr passive rti_score, sig
+gr bar passive, over(ctrcode, sort(passive) descending ///
+	label(angle(15) labs(vsmall)))
 	
-	reg active rti_score, r
 
-restore
-
-
-
-
-
-
-* United States
-gen pos=3
-	replace pos=9 if isco==4
-
-preserve
-collapse passive rti_score pos if ctrcode=="GRC", by(isco)
-	gr tw (scatter passive rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit passive rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for passive measures")
-		gr export rti_passive_US.pdf, replace
-restore	
-
-replace pos=9 if isco==5
-replace pos=6 if isco==7
-preserve
-collapse active rti_score pos if ctrcode=="BEL", by(isco)
-	gr tw (scatter active rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit active rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for active measures")
-		gr export rti_active_US.pdf, replace
-restore	
-	drop pos
-
-* Denmark
-gen pos=3
-	replace pos=7 if isco==4
-
-preserve
-collapse passive rti_score pos if ctrcode=="DNK", by(isco)
-	gr tw (scatter passive rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit passive rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for passive measures")
-		gr export rti_passive_DK.pdf, replace
-restore	
-
-replace pos=9 if isco==5
-replace pos=6 if isco==7
-preserve
-collapse active rti_score pos if ctrcode=="DNK", by(isco)
-	gr tw (scatter active rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit active rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for active measures")
-		gr export rti_active_DK.pdf, replace
-restore	
-	drop pos
-
-* Italy
-gen pos=3
-	replace pos=7 if isco==4
-
-preserve
-collapse passive rti_score pos if ctrcode=="ITA", by(isco)
-	gr tw (scatter passive rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit passive rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for passive measures")
-		gr export rti_passive_IT.pdf, replace
-restore	
-
-replace pos=9 if isco==5
-replace pos=6 if isco==7
-preserve
-collapse active rti_score pos if ctrcode=="ITA", by(isco)
-	gr tw (scatter active rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit active rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for active measures")
-		gr export rti_active_IT.pdf, replace
-restore	
-	drop pos
-
-	
-* Turkey
-gen pos=3
-	replace pos=7 if isco==4
-
-preserve
-collapse passive rti_score pos if ctrcode=="TUR", by(isco)
-	gr tw (scatter passive rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit passive rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for passive measures")
-		gr export rti_passive_TR.pdf, replace
-restore	
-
-replace pos=9 if isco==5
-replace pos=6 if isco==7
-preserve
-collapse active rti_score pos if ctrcode=="TUR", by(isco)
-	gr tw (scatter active rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
-		(lfit active rti_score, lp(dash)), ///
-		legend(off) xtitle("Routine-task intensity score") ///
-		ytitle("Support for active measures")
-		gr export rti_active_TR.pdf, replace
-restore	
-	drop pos	
