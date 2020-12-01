@@ -145,6 +145,54 @@ restore
 * By-country
 ************
 
+sort ctrcode
+	encode ctrcode, gen(cntry)
+
+putexcel set cntryeffects.xlsx, replace
+	putexcel A1 = "Country"
+	putexcel B1 = "beta_passive"
+	putexcel C1 = "rho_passive"
+	putexcel D1 = "beta_active"
+	putexcel E1 = "rho_active"	
+	
+qui su cntry, meanonly // stores r(max)	
+forvalues i = 1/`r(max)'{
+	local c=`i'+1 // cell number
+	di `c'
+	
+	qui levelsof ctrcode if cntry==`i', local(levl)
+	di `levl' // country label
+	putexcel A`c' = `levl'
+	
+	preserve
+	collapse passive active rti_score if cntry==`i', by(isco)
+	
+	qui reg passive rti_score // regression, passive
+		putexcel B`c' = _b[rti_score]
+	
+	qui corr passive rti_score // correlate, passive
+		local rho = r(rho)
+		putexcel C`c'= `rho'
+	
+	qui reg active rti_score // regression, active
+		putexcel D`c' = _b[rti_score]
+	
+	qui corr active rti_score // correlate, active
+		local rho = r(rho)
+		putexcel E`c'= `rho'
+	
+	restore
+}
+
+
+
+
+
+
+
+
+
+
 * United States
 gen pos=3
 	replace pos=9 if isco==4
