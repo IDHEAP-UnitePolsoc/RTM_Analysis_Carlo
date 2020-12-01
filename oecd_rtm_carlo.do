@@ -186,7 +186,16 @@ forvalues i = 1/`r(max)'{
 
 
 
+preserve
 
+collapse passive active rti_score if ctrcode=="BEL", by(isco)
+	
+	reg passive rti_score, r // regression, passive
+		pwcorr passive rti_score, sig
+	
+	reg active rti_score, r
+
+restore
 
 
 
@@ -198,7 +207,7 @@ gen pos=3
 	replace pos=9 if isco==4
 
 preserve
-collapse passive rti_score pos if ctrcode=="USA", by(isco)
+collapse passive rti_score pos if ctrcode=="GRC", by(isco)
 	gr tw (scatter passive rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
 		(lfit passive rti_score, lp(dash)), ///
 		legend(off) xtitle("Routine-task intensity score") ///
@@ -209,7 +218,7 @@ restore
 replace pos=9 if isco==5
 replace pos=6 if isco==7
 preserve
-collapse active rti_score pos if ctrcode=="USA", by(isco)
+collapse active rti_score pos if ctrcode=="BEL", by(isco)
 	gr tw (scatter active rti_score, mlabel(isco) ms(+) mlabv(pos)) ///
 		(lfit active rti_score, lp(dash)), ///
 		legend(off) xtitle("Routine-task intensity score") ///
