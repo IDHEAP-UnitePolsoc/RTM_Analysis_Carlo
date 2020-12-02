@@ -12,14 +12,14 @@ cap use "/Users/carloknotz/Dropbox (IDHEAP)/NCCR_WelfareSolidarity/OECD_module/D
 
 * Subsetting (adapt as needed)
 ******************************
-keep q31* s6 id ctrcode weight s3_agegroup q4 s27 q3d s30 q27*
+keep q31* s6 id ctrcode weight s3_agegroup q4 s27 q3d s30 q27* q11* q12*
 
 * svyset-ing
 ************
 svyset id [pweight=weight], strata(ctrcode)
 
-* Removing 'can't choose'
-*for var q31a-q31h: replace X =.a if X==97 | X==-77
+* Removing 'can't choose' from concern vars
+for var q11a-q12f q13 q14: replace X =.a if X==97 | X==-77
 
 * Dummy coding of main DVs
 **************************
@@ -206,4 +206,31 @@ gr bar active, over(ctrcode, sort(active) descending ///
 gr bar passive, over(ctrcode, sort(passive) descending ///
 	label(angle(15) labs(vsmall)))
 	
+	
+* Concerns over access to social protection, by country
+*******************************************************
 
+gr bar q11a, over(ctrcode, sort(q11a) label(angle(15) labs(vsmall))) // family
+	gr bar q11b, over(ctrcode, sort(q11b) label(angle(15) labs(vsmall))) // education
+	gr bar q11c, over(ctrcode, sort(q11c) label(angle(15) labs(vsmall))) // employment
+	gr bar q11d, over(ctrcode, sort(q11d) label(angle(15) labs(vsmall))) // housing
+	gr bar q11e, over(ctrcode, sort(q11e) label(angle(15) labs(vsmall))) // health
+	gr bar q11f, over(ctrcode, sort(q11f) label(angle(15) labs(vsmall))) // incapacity
+	gr bar q11g, over(ctrcode, sort(q11g) label(angle(15) labs(vsmall))) // long-term care
+	gr bar q11h, over(ctrcode, sort(q11h) label(angle(15) labs(vsmall))) // public safety
+	
+gr bar q12a, over(ctrcode, sort(q12a) label(angle(15) labs(vsmall))) // unemployment benefits
+	gr bar q12b, over(ctrcode, sort(q12b) label(angle(15) labs(vsmall))) // illness/disability
+	gr bar q12c, over(ctrcode, sort(q12c) label(angle(15) labs(vsmall))) // parental benefits
+	gr bar q12d, over(ctrcode, sort(q12d) label(angle(15) labs(vsmall))) // elderly care
+	gr bar q12e, over(ctrcode, sort(q12e) label(angle(15) labs(vsmall))) // retirement pensions
+	gr bar q12f, over(ctrcode, sort(q12f) label(angle(15) labs(vsmall))) // widow(er)hood
+	
+egen accserv = rowmean(q11a-q11h) // overall Q11
+	gr bar accserv, over(ctrcode, sort(accserv) label(angle(15) labs(vsmall)))
+	
+egen accben = rowmean(q12a-q12f) // overall Q12
+	gr bar accben, over(ctrcode, sort(accben) label(angle(15) labs(vsmall)))
+	
+egen access = rowmean(accserv accben)
+	gr bar access, over(ctrcode, sort(access) label(angle(15) labs(vsmall)))

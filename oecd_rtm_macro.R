@@ -91,14 +91,11 @@ isced <- edudata %>%
 data <- merge(effects,isced,
                  by.x = "Country")
 
-data %>% 
-    ggplot(aes(x=voc,y=rho_passive)) +
-        geom_point() +
-        geom_text(aes(label=Country)) +
-        geom_smooth(method = "lm")
+# Reading in OECD youth unemployment data
+#########################################
 
-data %>% 
-    ggplot(aes(x=voc,y=rho_active)) +
-        geom_point() +
-        geom_text(aes(label=Country)) +
-        geom_smooth(method = "lm")
+url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/LFS_SEXAGE_I_R/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+CRI+LTU.MW.1519+1524+1564.UR.A/all?startTime=2019&endTime=2019"
+
+unem <- as.data.frame(readSDMX(url))
+
+
