@@ -30,13 +30,24 @@ effects %>%
       #           values_to="vals") %>% 
     ggplot(aes(x=reorder(Country, -rho_passive),y=rho_passive)) +
         geom_bar(position = "dodge", stat = "identity") +
-        geom_rect(aes(ymin=-.4,ymax=.4,xmin=-Inf,xmax=Inf), alpha=0.05,fill="pink")
+        geom_rect(aes(ymin=-.4,ymax=.4,xmin=-Inf,xmax=Inf), alpha=0.05,fill="pink") +
+        ylab(paste0("Correlation coefficient betw.\n RTI & support for passive measures")) +
+        xlab(" ")
+    ggsave("rti_passive_over.pdf",
+           width = 8,
+           height = 5)
+    
 
 effects %>% 
     select(Country, rho_active) %>% 
     ggplot(aes(x=reorder(Country, -rho_active),y=rho_active)) +
         geom_bar(position = "dodge", stat = "identity")  +
-        geom_rect(aes(ymin=-.4,ymax=.4,xmin=-Inf,xmax=Inf), alpha=0.05,fill="pink")
+        geom_rect(aes(ymin=-.4,ymax=.4,xmin=-Inf,xmax=Inf), alpha=0.05,fill="pink") +
+        ylab(paste0("Correlation coefficient betw.\n RTI & support for passive measures")) +
+        xlab(" ")
+      ggsave("rti_active_over.pdf",
+           width = 8,
+           height = 5)
 
 
 effects %>%
