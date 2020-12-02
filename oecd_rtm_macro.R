@@ -96,6 +96,11 @@ data <- merge(effects,isced,
 
 url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/LFS_SEXAGE_I_R/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+CRI+LTU.MW.1519+1524+1564.UR.A/all?startTime=2019&endTime=2019"
 
-unem <- as.data.frame(readSDMX(url))
+unem <- as.data.frame(readSDMX(url)) %>% 
+    select(-SEX,-FREQ,-TIME_FORMAT,-obsTime,-SERIES)
 
+unem %>% 
+    filter(AGE == "1524") %>% 
+    ggplot(aes(x=reorder(COUNTRY,-obsValue),y=obsValue)) +
+      geom_col()
 
