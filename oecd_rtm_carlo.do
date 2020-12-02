@@ -12,7 +12,7 @@ cap use "/Users/carloknotz/Dropbox (IDHEAP)/NCCR_WelfareSolidarity/OECD_module/D
 
 * Subsetting (adapt as needed)
 ******************************
-keep q31* s6 id ctrcode weight s3_agegroup q4 s27 q3d s30 q27* q11* q12*
+keep q31* s6 id ctrcode weight s3_agegroup q4 s27 q3d s30 q27* q11* q12* q13 q14
 
 * svyset-ing
 ************
@@ -200,12 +200,21 @@ forvalues i = 1/`r(max)'{
 
 
 * Overall support by country
+****************************
 gr bar active, over(ctrcode, sort(active) descending ///
 	label(angle(15) labs(vsmall)))
 	
 gr bar passive, over(ctrcode, sort(passive) descending ///
 	label(angle(15) labs(vsmall)))
 	
+	
+* Variation in support, by ISCO & country
+*****************************************
+
+gr hbar passive if ctrcode=="AUT", over(isco, sort(passive) desc)
+
+gr hbar active if ctrcode=="KOR", over(isco, sort(active) desc)
+
 	
 * Concerns over access to social protection, by country
 *******************************************************

@@ -6,6 +6,7 @@ library(ggplot2)
     library(tidyverse)
     library(XML2R)
     library(rsdmx)
+    library(Rilostat)
 
 effects <- readxl::read_excel("cntryeffects.xlsx")
 
@@ -103,4 +104,8 @@ unem %>%
     filter(AGE == "1524") %>% 
     ggplot(aes(x=reorder(COUNTRY,-obsValue),y=obsValue)) +
       geom_col()
+
+# ILO Occupational structure data
+#################################
+
 
