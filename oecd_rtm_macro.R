@@ -8,24 +8,51 @@ library(ggplot2)
     library(rsdmx)
     library(Rilostat)
 
-effects <- readxl::read_excel("cntryeffects.xlsx")
 
+# Import 2-stage FGLS functions from Lewis/Linzer
+devtools::source_url("http://www.sscnet.ucla.edu/polisci/faculty/lewis/software/edvreg.R")
+  rm(edvreg.run.test,edvreg.sim,edvreg.test)
+
+# Regression coefficients, 1st stage regressions
+################################################
+
+betas_passive <- na.omit(read.csv("betas_passive.csv")) # Passive
 
 # Graph results - betas
-effects %>% 
-    mutate(cntry = factor(effects$Country, levels = effects$Country[order(effects$beta_passive, decreasing = T)])) %>% 
-    select(cntry,beta_passive, beta_active) %>% 
-    pivot_longer(cols = c("beta_active","beta_passive"),
-                 names_to="inds",
-                 values_to="vals") %>% 
-    ggplot(aes(x=cntry,y=vals,fill=inds)) +
-        geom_bar(position = "dodge", stat = "identity")
+betas_passive %>% 
+  ggplot(aes(x=reorder(country,-b),y=b)) +
+    geom_col()
+
+hist(betas_passive$omega)
+
+betas_active <- na.omit(read.csv("betas_active.csv")) # Passive
+
+# Graph results - betas
+betas_active %>% 
+  ggplot(aes(x=reorder(country,-b),y=b)) +
+    geom_col()
+  
+hist(betas_active$omega)  
+  
+# Macro-level data
+##################
+
+# OECD Unemployment rate
+url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/LFS_SEXAGE_I_R/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+CRI+LTU.MW.1564.UR.A/all?startTime=2019&endTime=2019"
+unem <- as.data.frame(readSDMX(url)) %>% 
+    dplyr::select(-SEX,-FREQ,-TIME_FORMAT,-obsTime,-SERIES,-AGE) %>% 
+    dplyr::rename(country=COUNTRY,yunem=obsValue)
+
+
+# Simple correlation coefficients
+#################################
+effects <- readxl::read_excel("cntryeffects.xlsx")
 
 
 # Graph results - rhos
 effects %>% 
     #mutate(cntry = factor(effects$Country, levels = effects$Country[order(effects$rho_passive, decreasing = T)])) %>% 
-    select(Country,rho_passive) %>% 
+    dplyr::select(Country,rho_passive) %>% 
     #pivot_longer(cols = c("rho_active","rho_passive"),
      #            names_to="inds",
       #           values_to="vals") %>% 
@@ -40,7 +67,7 @@ effects %>%
     
 
 effects %>% 
-    select(Country, rho_active) %>% 
+    dplyr::select(Country, rho_active) %>% 
     ggplot(aes(x=reorder(Country, -rho_active),y=rho_active)) +
         geom_bar(position = "dodge", stat = "identity")  +
         geom_rect(aes(ymin=-.4,ymax=.4,xmin=-Inf,xmax=Inf), alpha=0.05,fill="pink") +
@@ -52,7 +79,7 @@ effects %>%
 
 
 effects %>%
-    select(Country,rho_passive, rho_active) %>% 
+    dplyr::select(Country,rho_passive, rho_active) %>% 
     ggplot(aes(x=rho_passive,y=rho_active)) +
         geom_rect(aes(xmin=-0.3,ymin=-Inf,ymax=Inf,xmax=.3), alpha=0.01,fill="pink") +
         geom_rect(aes(xmin=-Inf,ymin=-0.3,ymax=0.3,xmax=Inf), alpha=0.01,fill="green") +
@@ -68,9 +95,9 @@ url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/EAG_NEAC/AUS+AUT+BEL+C
 
 edudata <- as.data.frame(readSDMX(url)) %>% 
     filter(SEX=="T") %>% 
-    select(-FIELD,-SEX,-TIME_FORMAT,-UNIT,-POWERCODE,-obsTime,-OBS_STATUS,-TIME_FORMAT,-INDICATOR,-MEASURE) %>% 
+    dplyr::select(-FIELD,-SEX,-TIME_FORMAT,-UNIT,-POWERCODE,-obsTime,-OBS_STATUS,-TIME_FORMAT,-INDICATOR,-MEASURE) %>% 
     rename(Country = COUNTRY) %>% 
-        mutate(isced = recode(ISC11A,
+        mutate(isced = dplyr::recode(ISC11A,
                               "L3T4" = "Up. sec. + post-sec. non-tert.",
                               "L3_C5" = "Up. sec. (voc.)",
                               "L4_C5" = "Post-sec. non-tert. (voc.)",
@@ -86,26 +113,30 @@ edudata %>%
 
 isced <- edudata %>%
     filter(AGE=="Y25T34" & ISC11A %in% c("L3T4_C5")) %>% 
-    select(Country,obsValue) %>% 
+    dplyr::select(Country,obsValue) %>% 
     rename(voc = obsValue)
 
 data <- merge(effects,isced,
                  by.x = "Country")
 
-# Reading in OECD youth unemployment data
-#########################################
 
-url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/LFS_SEXAGE_I_R/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+CRI+LTU.MW.1519+1524+1564.UR.A/all?startTime=2019&endTime=2019"
+rm(effects)
 
-unem <- as.data.frame(readSDMX(url)) %>% 
-    select(-SEX,-FREQ,-TIME_FORMAT,-obsTime,-SERIES)
+
+
+
 
 unem %>% 
-    filter(AGE == "1524") %>% 
     ggplot(aes(x=reorder(COUNTRY,-obsValue),y=obsValue)) +
       geom_col()
 
-# ILO Occupational structure data
-#################################
+# Merging
+data <- merge(betas_passive,unem,
+              by.x = "country")
+
+
+unemmod <- edvreg(data$b~data$yunem,
+                  omegasq = data$omega)
+summary(unemmod)
 
 
