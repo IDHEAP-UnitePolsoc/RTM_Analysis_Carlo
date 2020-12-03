@@ -270,19 +270,20 @@ xtmixed active rti_score i.gender age inc i.covid_inc i.empstat i.edu || ctrcode
 
 
 * By country
-
+************
 gen k = . in 1/24
 	gen b = . in 1/24
 	gen tval = . in 1/24
 	gen pval = . in 1/24
 	gen ul = . in 1/24
 	gen ll = . in 1/24
+	gen omega = . in 1/24
 
 
-{// graph for RTI betas on active by country
+{ // graph for RTI betas on active by country
 qui su cntry, meanonly // stores r(max)	
 forvalues i = 1/`r(max)'{	
-	qui reg active rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i', vce(robust)
+	qui reg active rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i' [pweight=weight], vce(robust)
 	replace k = `i' in `i'
 	replace b = _b[rti_score] in `i'
 	replace ul = _b[rti_score] + 1.96*_se[rti_score] in `i'
@@ -291,6 +292,7 @@ forvalues i = 1/`r(max)'{
 		local t = _b[rti_score]/_se[rti_score]
 		local df = e(df_r)	
 	replace pval = 2*ttail(`df',abs(`t')) in `i'
+	replace omega = (_se[rti_score])^2
 }
 	label values k cntry
 	
@@ -303,13 +305,21 @@ gr tw (bar b k) (rcap ul ll k) , ///
 	note("Spikes indicate 95% confidence intervals.", size(vsmall))
 	gr export beta_rti-active_cn.pdf, replace
 	
-gr hbar b, over(k, sort(b) desc)
+* Export to R
+preserve
+	keep k b tval pval ul ll
+	decode k, gen(country)
+		drop k
+	compress
+	export delimited using betas_active.csv, replace
+
+restore	
 }	
 
-{// graph for RTI beta on passive by country
+{ // graph for RTI beta on passive by country
 qui su cntry, meanonly // stores r(max)	
 forvalues i = 1/`r(max)'{	
-	qui reg passive rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i', vce(robust)
+	qui reg passive rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i' [pweight=weight], vce(robust)
 	replace k = `i' in `i'
 	replace b = _b[rti_score] in `i'
 	replace ul = _b[rti_score] + 1.96*_se[rti_score] in `i'
@@ -318,6 +328,7 @@ forvalues i = 1/`r(max)'{
 		local t = _b[rti_score]/_se[rti_score]
 		local df = e(df_r)	
 	replace pval = 2*ttail(`df',abs(`t')) in `i'
+	replace omega = (_se[rti_score])^2
 }
 	label values k cntry
 	
@@ -330,19 +341,47 @@ gr tw (bar b k) (rcap ul ll k) , ///
 	note("Spikes indicate 95% confidence intervals.", size(vsmall))
 	gr export beta_rti-passive_cn.pdf, replace	
 	
-gr hbar b, over(k, sort(b) desc)
-} 
-
 * Export to R
 preserve
-	keep k b tval pval ul ll
+	keep k b tval pval ul ll omega
 	decode k, gen(country)
 		drop k
 	compress
-	export delimited using betas.csv, replace
+	export delimited using betas_passive.csv, replace
 
 restore	
-	drop k b tval pval ul ll
+	drop k b tval pval ul ll omega
+} 
+
+
+* Interactive models
+********************
+
+* Passive
+xtmixed passive c.rti_score##c.age i.gender inc i.covid_inc i.empstat || ctrcode:, mle
+	margins, dydx(rti_score) at(age=(20(5)65))
+	marginsplot
+	
+xtmixed passive c.rti_score##c.inc i.gender age i.covid_inc i.empstat || ctrcode:, mle
+	margins, dydx(rti_score) over(inc) // Thewissen/Rueda
+	marginsplot
+	
+* Active
+xtmixed active c.rti_score##c.age i.gender inc i.covid_inc i.empstat || ctrcode:, mle
+	margins, dydx(rti_score) at(age=(20(5)65))
+	marginsplot
+	
+xtmixed active c.rti_score##c.inc i.gender age i.covid_inc i.empstat || ctrcode:, mle
+	margins, dydx(rti_score) over(inc) // Thewissen/Rueda
+	marginsplot
+
+	
+	
+reg passive rti_score if ctrcode=="NOR"	
+	local omega = (_se[rti_score])^2
+	di `omega'
+	
+	
 	
 	
 * Concerns over access to social protection, by country
