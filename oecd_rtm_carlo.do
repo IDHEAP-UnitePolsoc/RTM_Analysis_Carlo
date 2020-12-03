@@ -12,7 +12,8 @@ cap use "/Users/carloknotz/Dropbox (IDHEAP)/NCCR_WelfareSolidarity/OECD_module/D
 
 * Subsetting (adapt as needed)
 ******************************
-keep q31* s6 id ctrcode weight s3_agegroup q4 s27 q3d s30 q27* q11* q12* q13 q14
+keep q31* id ctrcode weight q4 s27 q3d s30 q27* q11* q12* q13 q14 ///
+	s2 s3_age s6 s8_dec s25 s35 
 
 * svyset-ing
 ************
@@ -20,6 +21,25 @@ svyset id [pweight=weight], strata(ctrcode)
 
 * Removing 'can't choose' from concern vars
 for var q11a-q12f q13 q14: replace X =.a if X==97 | X==-77
+
+* Same for others (demographics)
+recode s2 (3 = .a), copyrest gen(gender)
+	label values gender s2
+	
+rename s3_age age
+	rename s6 edu
+	rename s8_dec inc
+	
+recode s25 (6 7 = 6) (9 10 11 12 = 7), copyrest gen(empstat)
+	label define empstat 1 "Employee working full-time  (≥30 hrs/week)" ///
+		2 "Self-employed working full-time (≥30 hrs/week)" ///
+		3 "Employee working part-time (<30 hrs/week)" ///
+		4 "Self-employed working part-time (<30 hrs/week)" ///
+		5 "Unemployed" 6 "Student or apprentice/intern" ///
+		7 "Other" 8 "Retired"
+	label values empstat empstat
+	
+rename s35 covid_inc
 
 * Dummy coding of main DVs
 **************************
@@ -148,7 +168,7 @@ restore
 sort ctrcode
 	encode ctrcode, gen(cntry)
 
-putexcel set cntryeffects.xlsx, replace
+putexcel set cntryeffects.xlsx, modify
 	putexcel A1 = "Country"
 	putexcel B1 = "beta_passive"
 	putexcel C1 = "rho_passive"
@@ -215,6 +235,115 @@ gr hbar passive if ctrcode=="AUT", over(isco, sort(passive) desc)
 
 gr hbar active if ctrcode=="KOR", over(isco, sort(active) desc)
 
+
+* Correlation analysis - controls
+*********************************
+
+pwcorr rti_score gender age edu inc covid_inc empstat // looks ok
+
+
+* Individual-level models of preferences
+****************************************
+svyset, clear // check how weighting affects results first
+
+* Passive measures
+xtmixed passive || ctrcode:, mle
+
+xtmixed passive rti_score || ctrcode:, mle // baseline
+
+xtmixed passive rti_score i.gender age inc || ctrcode:, mle // basic demographics
+
+xtmixed passive rti_score i.gender age inc i.covid_inc i.empstat || ctrcode:, mle // extended demographics
+
+xtmixed passive rti_score i.gender age inc i.covid_inc i.empstat i.edu || ctrcode:, mle // adding education
+
+* Active measures
+xtmixed active || ctrcode:, mle
+
+xtmixed active rti_score || ctrcode:, mle // baseline
+
+xtmixed active rti_score i.gender age inc || ctrcode:, mle // basic demographics
+
+xtmixed active rti_score i.gender age inc i.covid_inc i.empstat || ctrcode:, mle // extended demographics
+
+xtmixed active rti_score i.gender age inc i.covid_inc i.empstat i.edu || ctrcode:, mle // adding education
+
+
+* By country
+
+gen k = . in 1/24
+	gen b = . in 1/24
+	gen tval = . in 1/24
+	gen pval = . in 1/24
+	gen ul = . in 1/24
+	gen ll = . in 1/24
+
+
+{// graph for RTI betas on active by country
+qui su cntry, meanonly // stores r(max)	
+forvalues i = 1/`r(max)'{	
+	qui reg active rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i', vce(robust)
+	replace k = `i' in `i'
+	replace b = _b[rti_score] in `i'
+	replace ul = _b[rti_score] + 1.96*_se[rti_score] in `i'
+	replace ll = _b[rti_score] - 1.96*_se[rti_score] in `i'
+	replace tval = _b[rti_score]/_se[rti_score] in `i'
+		local t = _b[rti_score]/_se[rti_score]
+		local df = e(df_r)	
+	replace pval = 2*ttail(`df',abs(`t')) in `i'
+}
+	label values k cntry
+	
+gr tw (bar b k) (rcap ul ll k) , ///
+	xlabel(1 "AUT" 2 "BEL" 3 "CAN" 4 "CHE" 5 "CHL" 6 "DEU" 7 "DNK" 8 "ESP" ///
+		9 "EST" 10 "FIN" 11 "FRA" 12 "GRC" 13 "IRL" 14 "ITA" 15 "KOR" 16 "LTU" ///
+		17 "MEX" 18 "NLD" 19 "NOR" 20 "POL" 21 "PRT" 22 "SVN" 23 "TUR" 24 "USA", ///
+		labs(vsmall)) ///
+	ytitle("{&beta}{sup:^} RTI Score") xtitle("") legend(off) ///
+	note("Spikes indicate 95% confidence intervals.", size(vsmall))
+	gr export beta_rti-active_cn.pdf, replace
+	
+gr hbar b, over(k, sort(b) desc)
+}	
+
+{// graph for RTI beta on passive by country
+qui su cntry, meanonly // stores r(max)	
+forvalues i = 1/`r(max)'{	
+	qui reg passive rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i', vce(robust)
+	replace k = `i' in `i'
+	replace b = _b[rti_score] in `i'
+	replace ul = _b[rti_score] + 1.96*_se[rti_score] in `i'
+	replace ll = _b[rti_score] - 1.96*_se[rti_score] in `i'
+	replace tval = _b[rti_score]/_se[rti_score] in `i'
+		local t = _b[rti_score]/_se[rti_score]
+		local df = e(df_r)	
+	replace pval = 2*ttail(`df',abs(`t')) in `i'
+}
+	label values k cntry
+	
+gr tw (bar b k) (rcap ul ll k) , ///
+	xlabel(1 "AUT" 2 "BEL" 3 "CAN" 4 "CHE" 5 "CHL" 6 "DEU" 7 "DNK" 8 "ESP" ///
+		9 "EST" 10 "FIN" 11 "FRA" 12 "GRC" 13 "IRL" 14 "ITA" 15 "KOR" 16 "LTU" ///
+		17 "MEX" 18 "NLD" 19 "NOR" 20 "POL" 21 "PRT" 22 "SVN" 23 "TUR" 24 "USA", ///
+		labs(vsmall)) ///
+	ytitle("{&beta}{sup:^} RTI Score") xtitle("") legend(off) ///
+	note("Spikes indicate 95% confidence intervals.", size(vsmall))
+	gr export beta_rti-passive_cn.pdf, replace	
+	
+gr hbar b, over(k, sort(b) desc)
+} 
+
+* Export to R
+preserve
+	keep k b tval pval ul ll
+	decode k, gen(country)
+		drop k
+	compress
+	export delimited using betas.csv, replace
+
+restore	
+	drop k b tval pval ul ll
+	
 	
 * Concerns over access to social protection, by country
 *******************************************************
