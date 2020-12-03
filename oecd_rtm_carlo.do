@@ -292,7 +292,7 @@ forvalues i = 1/`r(max)'{
 		local t = _b[rti_score]/_se[rti_score]
 		local df = e(df_r)	
 	replace pval = 2*ttail(`df',abs(`t')) in `i'
-	replace omega = (_se[rti_score])^2
+	replace omega = (_se[rti_score])^2 in `i'
 }
 	label values k cntry
 	
@@ -307,7 +307,7 @@ gr tw (bar b k) (rcap ul ll k) , ///
 	
 * Export to R
 preserve
-	keep k b tval pval ul ll
+	keep k b tval pval ul ll omega
 	decode k, gen(country)
 		drop k
 	compress
@@ -328,7 +328,7 @@ forvalues i = 1/`r(max)'{
 		local t = _b[rti_score]/_se[rti_score]
 		local df = e(df_r)	
 	replace pval = 2*ttail(`df',abs(`t')) in `i'
-	replace omega = (_se[rti_score])^2
+	replace omega = (_se[rti_score])^2 in `i'
 }
 	label values k cntry
 	
@@ -351,7 +351,7 @@ preserve
 
 restore	
 	drop k b tval pval ul ll omega
-} 
+}
 
 
 * Interactive models
