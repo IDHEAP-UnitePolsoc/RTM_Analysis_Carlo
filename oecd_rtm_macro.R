@@ -12,6 +12,9 @@ library(ggplot2)
 # Import 2-stage FGLS functions from Lewis/Linzer
 devtools::source_url("http://www.sscnet.ucla.edu/polisci/faculty/lewis/software/edvreg.R")
   rm(edvreg.run.test,edvreg.sim,edvreg.test)
+  
+# Helper function for ILO data below
+delta <- function(x) {x-lag(x)}
 
 # Regression coefficients, 1st stage regressions
 ################################################
@@ -71,7 +74,6 @@ isced <- edudata %>%
     rename(voc = obsValue)
 
 # OECD EPL Data
-###############
 url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/EPL_OV/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+CRI+LVA+LTU.EPRC_V4/all?startTime=2019&endTime=2019"
 
 epl <- as.data.frame(readSDMX(url)) %>% 
@@ -80,7 +82,6 @@ epl <- as.data.frame(readSDMX(url)) %>%
            epl=obsValue)
 
 # OECD ALMP (Training) data
-###########################
 url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/LMPEXP/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+IRL+ISR+ITA+JPN+KOR+LVA+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+GBR+USA+LTU.20.EXPPCT.A/all?startTime=2018&endTime=2018"
 
 train <- as.data.frame(readSDMX(url)) %>% 
@@ -89,7 +90,6 @@ train <- as.data.frame(readSDMX(url)) %>%
            train=obsValue)
 
 # OECD Benefit conditionality data
-##################################
 url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/SBE/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+NMEC+BGR+HRV+CYP+MLT+ROU.TIER1.AVAIL+OVER/all?startTime=2020&endTime=2020"
 
 cond <- as.data.frame(readSDMX(url)) %>% 
@@ -102,8 +102,6 @@ cond <- as.data.frame(readSDMX(url)) %>%
                 id_cols = country)
 
 # OECD Tax rate data
-####################
-
 url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/TABLE_I6/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA.ALL_IN_RATE+ALL_IN_RATE_SING+ALL_IN_RATE_SING_NO_CH+ALL_IN_RATE_SING_TWO_CH+ALL_IN_RATE_MAR+ALL_IN_RATE_MAR_NO_CH+ALL_IN_RATE_MAR_TWO_CH+ALL_IN_LESS_CASH+ALL_IN_LESS_CASH_SING+ALL_IN_LESS_CASH_SING_TWO_CH+ALL_IN_LESS_CASH_MAR+ALL_IN_LESS_CASH_MAR_NO_CH+ALL_IN_LESS_CASH_MAR_TWO_CH/all?startTime=2019&endTime=2019"
 
 tax <- as.data.frame(readSDMX(url)) %>% # average wage! 
@@ -118,6 +116,43 @@ tax <- as.data.frame(readSDMX(url)) %>% # average wage!
   rowwise() %>% 
   mutate(taxrate = mean(c(ALL_IN_RATE_SING_TWO_CH,ALL_IN_RATE_SING_NO_CH,
                           ALL_IN_RATE_MAR_TWO_CH,ALL_IN_RATE_MAR_NO_CH)))
+
+# ILO Occupational structure data
+occstruct <- get_ilostat(id = "EMP_TEMP_SEX_OCU_NB_A",
+                         filters = list(timefrom = 2010)) %>% 
+  filter(ref_area %in% betas_active$country) %>% 
+  filter(sex == "SEX_T") %>% 
+  dplyr::select(-note_classif,-note_indicator,-note_source,-indicator,-source) %>% 
+  rename(country = ref_area,
+         vals = obs_value,
+         year = time) %>% 
+  pivot_wider(id_cols = c(country,year),
+              values_from = vals,
+              names_from = classif1) %>% 
+  dplyr::select(-contains("ISCO88"),-contains("SKILL")) %>% 
+  mutate(isco_1 = (OCU_ISCO08_1/OCU_ISCO08_TOTAL),
+         isco_2 = (OCU_ISCO08_2/OCU_ISCO08_TOTAL),
+         isco_3 = (OCU_ISCO08_3/OCU_ISCO08_TOTAL),
+         isco_4 = (OCU_ISCO08_4/OCU_ISCO08_TOTAL),
+         isco_5 = (OCU_ISCO08_5/OCU_ISCO08_TOTAL),
+         isco_6 = (OCU_ISCO08_6/OCU_ISCO08_TOTAL),
+         isco_7 = (OCU_ISCO08_7/OCU_ISCO08_TOTAL),
+         isco_8 = (OCU_ISCO08_8/OCU_ISCO08_TOTAL),
+         isco_9 = (OCU_ISCO08_9/OCU_ISCO08_TOTAL),
+         isco_0 = (OCU_ISCO08_0/OCU_ISCO08_TOTAL),
+         isco_X = (OCU_ISCO08_X/OCU_ISCO08_TOTAL)) %>% 
+  dplyr::select(-contains("_ISCO08_")) %>% 
+  rowwise() %>% 
+  mutate(high_rti = sum(c(isco_4,isco_7,isco_9,isco_6,isco_8))) %>%  # High-RTI occupational groups: 4, 7, 9, 6, 8
+  filter(year>2010) %>% 
+  group_by(country) %>% 
+  mutate_each(funs(delta),c(high_rti)) %>% 
+  group_by(country) %>% 
+  summarise(sum_del_highrti = sum(high_rti, na.rm = T))
+
+occstruct %>% 
+  ggplot(aes(x=reorder(country, sum_del_highrti),y=sum_del_highrti)) +
+    geom_col()
 
 # Merging
 #########
