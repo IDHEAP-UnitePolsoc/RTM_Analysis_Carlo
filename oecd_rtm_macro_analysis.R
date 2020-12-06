@@ -77,14 +77,36 @@ summary(mvmod2) # both significant!
 macrodata %>% 
     ggplot(aes(x=unem,y=b_pas)) +
         geom_point() +
-        geom_text(aes(label=country)) +
-        geom_smooth(method = "lm")
+        geom_text(aes(label=country),
+                  check_overlap = F,
+                  size = 3,
+                  nudge_y = 0.005) +
+        stat_smooth(method = "lm",
+                    linetype = "solid",
+                    color = "black",
+                    size = .25) +
+    ylab("Est. effect of automation vulnerability on preferences") +
+    xlab("Unemployment rate (%)") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
+    ggsave("unem_pas.pdf")
 
 macrodata %>% 
-    ggplot(aes(x=sum_del_highrti,y=b_pas)) +
+    ggplot(aes(x=(sum_del_highrti*100),y=b_pas)) +
         geom_point() +
-        geom_text(aes(label=country)) +
-        geom_smooth(method = "lm")
+        geom_text(aes(label=country),
+                  check_overlap = F,
+                  size = 3,
+                  nudge_y = 0.005) +
+        stat_smooth(method = "lm",
+                    linetype = "solid",
+                    color = "black",
+                    size = .25) +
+    ylab("Est. effect of automation vulnerability on preferences") +
+    xlab("Cumul. change high-RTI occupations (%)") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
+    ggsave("occ_pas.pdf")
 
 # Export via texreg
 screenreg(list(mod1,mod2,mod3,mod4,mod5,mod6,mod7,mod8),

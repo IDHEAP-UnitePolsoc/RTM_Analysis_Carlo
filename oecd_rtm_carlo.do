@@ -168,38 +168,16 @@ restore
 sort ctrcode
 	encode ctrcode, gen(cntry)
 
-putexcel set cntryeffects.xlsx, modify
-	putexcel A1 = "Country"
-	putexcel B1 = "beta_passive"
-	putexcel C1 = "rho_passive"
-	putexcel D1 = "beta_active"
-	putexcel E1 = "rho_active"	
+
 	
 qui su cntry, meanonly // stores r(max)	
 forvalues i = 1/`r(max)'{
 	local c=`i'+1 // cell number
 	di `c'
 	
-	qui levelsof ctrcode if cntry==`i', local(levl)
-	di `levl' // country label
-	putexcel A`c' = `levl'
 	
 	preserve
 	collapse passive active rti_score if cntry==`i', by(isco)
-	
-	qui reg passive rti_score // regression, passive
-		putexcel B`c' = _b[rti_score]
-	
-	qui corr passive rti_score // correlate, passive
-		local rho = r(rho)
-		putexcel C`c'= `rho'
-	
-	qui reg active rti_score // regression, active
-		putexcel D`c' = _b[rti_score]
-	
-	qui corr active rti_score // correlate, active
-		local rho = r(rho)
-		putexcel E`c'= `rho'
 		
 	gr tw (scatter passive rti_score, mlabel(isco) ms(+)) ///
 		(lfit passive rti_score, lp(dash)), ///
@@ -226,21 +204,14 @@ gr bar active, over(ctrcode, sort(active) descending ///
 	
 gr bar passive, over(ctrcode, sort(passive) descending ///
 	label(angle(15) labs(vsmall)))
-	
-	
-* Variation in support, by ISCO & country
-*****************************************
-
-gr hbar passive if ctrcode=="AUT", over(isco, sort(passive) desc)
-
-gr hbar active if ctrcode=="KOR", over(isco, sort(active) desc)
 
 
 * Correlation analysis - controls
 *********************************
 
-pwcorr rti_score gender age edu inc covid_inc empstat // looks ok
-
+estpost corr rti_score gender age edu inc covid_inc empstat, matrix listwise // looks ok
+	esttab, unstack not noobs compress
+	eststo clear
 
 * Individual-level models of preferences
 ****************************************
@@ -249,25 +220,63 @@ svyset, clear // check how weighting affects results first
 * Passive measures
 xtmixed passive || ctrcode:, mle
 
-xtmixed passive rti_score || ctrcode:, mle // baseline
+eststo: xtmixed passive rti_score || ctrcode:, mle // baseline
+	estadd scalar obs e(N_g)[1,1]
 
-xtmixed passive rti_score i.gender age inc || ctrcode:, mle // basic demographics
+eststo: xtmixed passive rti_score i.gender age inc || ctrcode:, mle // basic demographics
+	estadd scalar obs e(N_g)[1,1]
 
-xtmixed passive rti_score i.gender age inc i.covid_inc i.empstat || ctrcode:, mle // extended demographics
+eststo: xtmixed passive rti_score i.gender age inc i.covid_inc i.empstat || ctrcode:, mle // extended demographics
+	estadd scalar obs e(N_g)[1,1]
 
-xtmixed passive rti_score i.gender age inc i.covid_inc i.empstat i.edu || ctrcode:, mle // adding education
+eststo: xtmixed passive rti_score i.gender age inc i.covid_inc i.empstat i.edu || ctrcode:, mle // adding education
+	estadd scalar obs e(N_g)[1,1]
+
+esttab using passivemods.tex, se b(2) nobase label replace wide ///
+	starlevels(* .05) ///  
+	stats(N obs chi2 p, fmt(0 0 2 3) ///
+		labels("Respondents" "Countries" "$\chi^2$" "Model p-value") ///
+		layout(@ @ @ @)) varwidth(50) ///
+		refcat(2.covid_inc "Change in financial situation during pandemic:" ///
+			2.empstat " ", nolabel) ///
+		eqlabels("" "SD(constant)" "SD(residual)", none) transform(ln*: exp(@) exp(@)) ///
+		nomtitles coeflabels(inc "Income" age "Age" rti_score "RTI" ///
+			2.edu "Incompl. primary" 3.edu "Primary school" 4.edu "Incompl. secondary (tech./voc.)" ///
+			5.edu "Secondary (tech./voc.)" 6.edu "Incompl. secondary (univ.-prep.)" ///
+			7.edu "Secondary (univ.-prep.)" 8.edu "Some university" 9 "University degree") booktabs ///
+	alignment(D{.}{.}{-1}D{.}{.}{-1})  
+	eststo clear
+	
 
 * Active measures
 xtmixed active || ctrcode:, mle
 
-xtmixed active rti_score || ctrcode:, mle // baseline
+eststo: xtmixed active rti_score || ctrcode:, mle // baseline
+	estadd scalar obs e(N_g)[1,1]
 
-xtmixed active rti_score i.gender age inc || ctrcode:, mle // basic demographics
+eststo: xtmixed active rti_score i.gender age inc || ctrcode:, mle // basic demographics
+	estadd scalar obs e(N_g)[1,1]
 
-xtmixed active rti_score i.gender age inc i.covid_inc i.empstat || ctrcode:, mle // extended demographics
+eststo: xtmixed active rti_score i.gender age inc i.covid_inc i.empstat || ctrcode:, mle // extended demographics
+	estadd scalar obs e(N_g)[1,1]
 
-xtmixed active rti_score i.gender age inc i.covid_inc i.empstat i.edu || ctrcode:, mle // adding education
+eststo: xtmixed active rti_score i.gender age inc i.covid_inc i.empstat i.edu || ctrcode:, mle // adding education
+	estadd scalar obs e(N_g)[1,1]
 
+esttab using activemods.tex, se b(2) nobase label replace wide ///
+	starlevels(* .05) ///  
+	stats(N obs chi2 p, fmt(0 0 2 3) ///
+		labels("Respondents" "Countries" "$\chi^2$" "Model p-value") ///
+		layout(@ @ @ @)) varwidth(50) ///
+		refcat(2.covid_inc "Change in financial situation during pandemic:" ///
+			2.empstat " ", nolabel) ///
+		eqlabels("" "SD(constant)" "SD(residual)", none) transform(ln*: exp(@) exp(@)) ///
+		nomtitles coeflabels(inc "Income" age "Age" rti_score "RTI" ///
+			2.edu "Incompl. primary" 3.edu "Primary school" 4.edu "Incompl. secondary (tech./voc.)" ///
+			5.edu "Secondary (tech./voc.)" 6.edu "Incompl. secondary (univ.-prep.)" ///
+			7.edu "Secondary (univ.-prep.)" 8.edu "Some university" 9 "University degree") booktabs ///
+	alignment(D{.}{.}{-1}D{.}{.}{-1})  
+	eststo clear
 
 * By country
 ************
@@ -280,7 +289,7 @@ gen k = . in 1/24
 	gen omega = . in 1/24
 
 
-{ // graph for RTI betas on active by country
+ // graph for RTI betas on active by country
 qui su cntry, meanonly // stores r(max)	
 forvalues i = 1/`r(max)'{	
 	qui reg active rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i' [pweight=weight], vce(robust)
@@ -296,14 +305,20 @@ forvalues i = 1/`r(max)'{
 }
 	label values k cntry
 	
-gr tw (bar b k) (rcap ul ll k) , ///
-	xlabel(1 "AUT" 2 "BEL" 3 "CAN" 4 "CHE" 5 "CHL" 6 "DEU" 7 "DNK" 8 "ESP" ///
-		9 "EST" 10 "FIN" 11 "FRA" 12 "GRC" 13 "IRL" 14 "ITA" 15 "KOR" 16 "LTU" ///
-		17 "MEX" 18 "NLD" 19 "NOR" 20 "POL" 21 "PRT" 22 "SVN" 23 "TUR" 24 "USA", ///
-		labs(vsmall)) ///
-	ytitle("{&beta}{sup:^} RTI Score") xtitle("") legend(off) ///
-	note("Spikes indicate 95% confidence intervals.", size(vsmall))
-	gr export beta_rti-active_cn.pdf, replace
+sort k
+	decode k, gen(k_lab)
+	sort b
+	gen sort_k = _n in 1/24
+	labmask sort_k, values(k_lab)
+	
+gr tw (rcap ul ll sort_k) (scatter b sort_k),  ///
+	xlabel(1(1)24, value labs(vsmall)) ///
+	yline(0, lp(dash) lc(gray)) ///
+	ytitle("Estimated effect of automation" "vulnerability on policy preferences") ///
+	xtitle("") legend(off) ///
+	note("95% confidence intervals.", size(vsmall))
+	gr export beta_rti-active_cn.pdf, replace	
+	drop k_lab sort_k
 	
 * Export to R
 preserve
@@ -314,9 +329,9 @@ preserve
 	export delimited using betas_active.csv, replace
 
 restore	
-}	
+	
 
-{ // graph for RTI beta on passive by country
+ // graph for RTI beta on passive by country
 qui su cntry, meanonly // stores r(max)	
 forvalues i = 1/`r(max)'{	
 	qui reg passive rti_score i.gender age inc i.covid_inc i.empstat if cntry==`i' [pweight=weight], vce(robust)
@@ -330,16 +345,21 @@ forvalues i = 1/`r(max)'{
 	replace pval = 2*ttail(`df',abs(`t')) in `i'
 	replace omega = (_se[rti_score])^2 in `i'
 }
-	label values k cntry
+
+sort k
+	decode k, gen(k_lab)
+	sort b
+	gen sort_k = _n in 1/24
+	labmask sort_k, values(k_lab)
 	
-gr tw (bar b k) (rcap ul ll k) , ///
-	xlabel(1 "AUT" 2 "BEL" 3 "CAN" 4 "CHE" 5 "CHL" 6 "DEU" 7 "DNK" 8 "ESP" ///
-		9 "EST" 10 "FIN" 11 "FRA" 12 "GRC" 13 "IRL" 14 "ITA" 15 "KOR" 16 "LTU" ///
-		17 "MEX" 18 "NLD" 19 "NOR" 20 "POL" 21 "PRT" 22 "SVN" 23 "TUR" 24 "USA", ///
-		labs(vsmall)) ///
-	ytitle("{&beta}{sup:^} RTI Score") xtitle("") legend(off) ///
-	note("Spikes indicate 95% confidence intervals.", size(vsmall))
+gr tw (rcap ul ll sort_k) (scatter b sort_k),  ///
+	xlabel(1(1)24, value labs(vsmall)) ///
+	yline(0, lp(dash) lc(gray)) ///
+	ytitle("Estimated effect of automation" "vulnerability on policy preferences") ///
+	xtitle("") legend(off) ///
+	note("95% confidence intervals.", size(vsmall))
 	gr export beta_rti-passive_cn.pdf, replace	
+	drop k_lab sort_k
 	
 * Export to R
 preserve
@@ -351,37 +371,69 @@ preserve
 
 restore	
 	drop k b tval pval ul ll omega
-}
+
 
 
 * Interactive models
 ********************
+label var age "Age"
+	label var rti_score "RTI"
+	label var inc "Income"
 
 * Passive
-xtmixed passive c.rti_score##c.age i.gender inc i.covid_inc i.empstat || ctrcode:, mle
+eststo: xtmixed passive c.rti_score##c.age i.gender inc i.covid_inc i.empstat || ctrcode:, mle
+	estadd scalar obs e(N_g)[1,1]
 	margins, dydx(rti_score) at(age=(20(5)65))
-	marginsplot
+	marginsplot, title("") ytitle("Marginal effect of RTI (fixed portion)") ///
+		recastci(rarea) ciopt(color(%40)) ///
+		recast(line) ///
+		yline(0, lp(dash) lc(gray))
+	gr export rti_age_pas.pdf, replace
 	
-xtmixed passive c.rti_score##c.inc i.gender age i.covid_inc i.empstat || ctrcode:, mle
+eststo: xtmixed passive c.rti_score##c.inc i.gender age i.covid_inc i.empstat || ctrcode:, mle
+	estadd scalar obs e(N_g)[1,1]
 	margins, dydx(rti_score) over(inc) // Thewissen/Rueda
-	marginsplot
+	marginsplot, title("") ytitle("Marginal effect of RTI (fixed portion)") ///
+		recastci(rarea) ciopt(color(%40)) ///
+		recast(line) ///
+		yline(0, lp(dash) lc(gray)) ///
+		xlabel(,angle(25))
+	gr export rti_inc_pas.pdf, replace
 	
 * Active
-xtmixed active c.rti_score##c.age i.gender inc i.covid_inc i.empstat || ctrcode:, mle
+eststo: xtmixed active c.rti_score##c.age i.gender inc i.covid_inc i.empstat || ctrcode:, mle
+	estadd scalar obs e(N_g)[1,1]
 	margins, dydx(rti_score) at(age=(20(5)65))
-	marginsplot
+	marginsplot, title("") ytitle("Marginal effect of RTI (fixed portion)") ///
+		recastci(rarea) ciopt(color(%40)) ///
+		recast(line) ///
+		yline(0, lp(dash) lc(gray))
+	gr export rti_age_act.pdf, replace
 	
-xtmixed active c.rti_score##c.inc i.gender age i.covid_inc i.empstat || ctrcode:, mle
+eststo: xtmixed active c.rti_score##c.inc i.gender age i.covid_inc i.empstat || ctrcode:, mle
+	estadd scalar obs e(N_g)[1,1]
 	margins, dydx(rti_score) over(inc) // Thewissen/Rueda
-	marginsplot
+	marginsplot, title("") ytitle("Marginal effect of RTI (fixed portion)") ///
+		recastci(rarea) ciopt(color(%40)) ///
+		recast(line) ///
+		yline(0, lp(dash) lc(gray)) ///
+		xlabel(,angle(25))
+	gr export rti_inc_act.pdf, replace
 
 	
-	
-reg passive rti_score if ctrcode=="NOR"	
-	local omega = (_se[rti_score])^2
-	di `omega'
-	
-	
+esttab using intermods.tex, se b(2) nobase compress replace label ///  using intermods.tex
+	starlevels(* .05) ///  
+	stats(N obs chi2 p, fmt(0 0 2 3) ///
+		labels("Respondents" "Countries" "$\chi^2$" "Model p-value") ///
+		layout(@ @ @ @)) varwidth(50) ///
+		refcat(2.covid_inc "Change in financial situation during pandemic:" ///
+			2.empstat " ", nolabel)  booktabs alignment(D{.}{.}{-1}D{.}{.}{-1}) ///
+		eqlabels("" "SD(constant)" "SD(residual)", none) transform(ln*: exp(@) exp(@)) ///
+		nomtitles wide order(rti_score age inc c.rti_score#c.age c.rti_score#c.inc) ///
+		mgroups("Passive measures" "Active measures", pattern(1 0 1 0)                   ///
+        prefix(\multicolumn{@span}{c}{) suffix(})   ///
+        span erepeat(\cmidrule(lr){@span}))
+	eststo clear
 	
 	
 * Concerns over access to social protection, by country

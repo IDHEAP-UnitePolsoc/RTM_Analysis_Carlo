@@ -36,7 +36,7 @@ unem <- as.data.frame(readSDMX(url)) %>%
     dplyr::rename(country=COUNTRY,unem=obsValue)
 
 
-# OECD Educational attainment data
+# OECD vocational training intensity
 url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/EAG_NEAC/AUS+AUT+BEL+CAN+CHL+COL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA.L3T4+L3+L3_C5+L4+L4_C5+L3T4_C4+L3T4_C5+L3T4_X+L5T8.T+F+M.Y25T64+Y25T34.T.VALUE.NEAC_SHARE_EA/all?startTime=9999&endTime=9999"
 
 edudata <- as.data.frame(readSDMX(url)) %>% 
