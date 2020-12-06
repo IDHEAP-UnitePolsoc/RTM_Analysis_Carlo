@@ -104,7 +104,8 @@ tax <- as.data.frame(readSDMX(url)) %>% # average wage!
   rename(country = COU) %>% 
   rowwise() %>% 
   mutate(taxrate = mean(c(ALL_IN_RATE_SING_TWO_CH,ALL_IN_RATE_SING_NO_CH,
-                          ALL_IN_RATE_MAR_TWO_CH,ALL_IN_RATE_MAR_NO_CH)))
+                          ALL_IN_RATE_MAR_TWO_CH,ALL_IN_RATE_MAR_NO_CH))) %>% 
+  dplyr::select(country,taxrate)
 
 # ILO Occupational structure data
 occstruct <- get_ilostat(id = "EMP_TEMP_SEX_OCU_NB_A",
