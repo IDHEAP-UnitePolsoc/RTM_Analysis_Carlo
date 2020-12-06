@@ -1,20 +1,9 @@
 
-# OECD RTM Macro-level analysis
-###############################
+#################################################
+# Loading macro-level data for 2nd stage analysis
+#################################################
 
-library(ggplot2)
-    library(tidyverse)
-    library(XML2R)
-    library(rsdmx)
-    library(Rilostat)
-
-
-# Import 2-stage FGLS functions from Lewis/Linzer
-devtools::source_url("http://www.sscnet.ucla.edu/polisci/faculty/lewis/software/edvreg.R")
-  rm(edvreg.run.test,edvreg.sim,edvreg.test)
-  
-# Helper function for ILO data below
-delta <- function(x) {x-lag(x)}
+# Carlo Knotz
 
 # Regression coefficients, 1st stage regressions
 ################################################
@@ -44,7 +33,7 @@ hist(betas_active$omega)
 url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/LFS_SEXAGE_I_R/AUS+AUT+BEL+CAN+CHL+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+CRI+LTU.MW.1564.UR.A/all?startTime=2019&endTime=2019"
 unem <- as.data.frame(readSDMX(url)) %>% 
     dplyr::select(-SEX,-FREQ,-TIME_FORMAT,-obsTime,-SERIES,-AGE) %>% 
-    dplyr::rename(country=COUNTRY,yunem=obsValue)
+    dplyr::rename(country=COUNTRY,unem=obsValue)
 
 
 # OECD Educational attainment data
@@ -53,7 +42,7 @@ url <- "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/EAG_NEAC/AUS+AUT+BEL+C
 edudata <- as.data.frame(readSDMX(url)) %>% 
     filter(SEX=="T") %>% 
     dplyr::select(-FIELD,-SEX,-TIME_FORMAT,-UNIT,-POWERCODE,-obsTime,-OBS_STATUS,-TIME_FORMAT,-INDICATOR,-MEASURE) %>% 
-    rename(Country = COUNTRY) %>% 
+    rename(country = COUNTRY) %>% 
         mutate(isced = dplyr::recode(ISC11A,
                               "L3T4" = "Up. sec. + post-sec. non-tert.",
                               "L3_C5" = "Up. sec. (voc.)",
@@ -65,12 +54,12 @@ edudata <- as.data.frame(readSDMX(url)) %>%
 
 edudata %>% 
     filter(AGE=="Y25T34" & ISC11A %in% c("L3T4_C5","L5T8")) %>% 
-    ggplot(aes(x=Country,y=obsValue,fill=isced)) +
+    ggplot(aes(x=country,y=obsValue,fill=isced)) +
         geom_bar(position = "dodge",stat = "identity")
 
 isced <- edudata %>%
     filter(AGE=="Y25T34" & ISC11A %in% c("L3T4_C5")) %>% 
-    dplyr::select(Country,obsValue) %>% 
+    dplyr::select(country,obsValue) %>% 
     rename(voc = obsValue)
 
 # OECD EPL Data
@@ -156,4 +145,66 @@ occstruct %>%
 
 # Merging
 #########
+
+betas_active <- betas_active %>% 
+    rename(b_act = b,
+           tval_act = tval,
+           pval_act = pval,
+           ul_act = ul,
+           ll_act = ll,
+           omega_act = omega)
+
+betas_passive <- betas_passive %>% 
+    rename(b_pas = b,
+           tval_pas = tval,
+           pval_pas = pval,
+           ul_pas = ul,
+           ll_pas = ll,
+           omega_pas = omega)
+
+
+macrodata <- betas_active %>% # outcome vars
+  left_join(betas_passive,
+            by = c("country"))
+  rm(betas_active,betas_passive)
+
+macrodata <- macrodata %>% # occupational structure
+  left_join(occstruct,
+            by = c("country"))
+  rm(occstruct)
+
+macrodata <- macrodata %>% # educational attainment
+  left_join(isced,
+             by = c("country"))
+  rm(isced,edudata)
+  
+macrodata <- macrodata %>% # unemployment benefit conditionality
+  left_join(cond,
+             by = c("country"))
+  rm(cond)
+
+macrodata <- macrodata %>% # avg. income tax rates
+  left_join(tax,
+            by = c("country"))
+  rm(tax)
+  
+macrodata <- macrodata %>% # dismissal rules
+  left_join(epl,
+            by = c("country"))
+  rm(epl)
+  
+macrodata <- macrodata %>% # labor market training spending
+  left_join(train,
+            by = c("country"))
+  rm(train)
+
+macrodata <- macrodata %>% # unemployment rate
+  left_join(unem,
+            by = c("country"))
+  rm(unem)
+  
+  
+# Effective spending on ALMP (following Rueda, 2015, CP)
+macrodata <- macrodata %>% 
+  mutate(train_pc = (train*100)/unem)
 
